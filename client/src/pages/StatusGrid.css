@@ -1,0 +1,216 @@
+.stat-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-row > * {
+  flex: 1;
+  min-width: 220px;
+}
+
+.status-grade-section {
+  margin-bottom: 22px;
+}
+
+.status-grade-section:last-child {
+  margin-bottom: 0;
+}
+
+.status-grade-section__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 20px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.status-grade-section__header:hover .status-grade-section__title {
+  color: var(--accent-blue);
+}
+
+.status-grade-section__chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.status-grade-section__chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.status-grade-section__title {
+  font-size: 15px;
+  margin: 0;
+  transition: color 0.15s ease;
+}
+
+.status-grid-scroll {
+  overflow-x: auto;
+  padding: 0 20px 20px;
+}
+
+/* Inner box just for the Grade Level table itself (not the "Core Subjects"/
+   "Cluster of Electives" label above it) — bounds its height so a grade
+   with many classes scrolls internally instead of growing the whole page,
+   which is what makes the sticky header row below actually mean something. */
+.status-grid-scroll--sticky {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.status-subsection-title {
+  font-size: 12.5px;
+  margin: 4px 0 8px;
+}
+
+.status-grid {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+}
+
+.status-grid th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  border: 1px solid var(--card-border);
+  background: #f8fafc;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* Frozen header row: sticks to the top of .status-grid-scroll--sticky's own
+   scroll box while scrolling down through many class/sections. */
+.status-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Frozen first column (Class/Section) — fixed width plus sticky-left so it
+   stays put while scrolling right through many Learning Area columns.
+   Needs an opaque background (already has one below) so scrolled-under
+   cell content doesn't show through. */
+.status-grid th:first-child,
+.status-grid td.status-grid__area {
+  width: 180px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+/* The top-left corner cell is sticky on both axes at once (matches both
+   rules above) — give it the highest stacking so it stays above both the
+   frozen row and frozen column where they'd otherwise overlap. */
+.status-grid thead th:first-child {
+  z-index: 3;
+}
+
+.status-grid th:last-child,
+.status-grid td.status-grid__remarks {
+  width: 150px;
+}
+
+.status-grid td {
+  border: 1px solid var(--card-border);
+  padding: 10px;
+  vertical-align: middle;
+  height: 1px; /* lets .status-cell stretch to fill the row's tallest cell */
+}
+
+.status-grid td.status-grid__area {
+  font-weight: 700;
+  font-size: 13.5px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  background: #fafbfd;
+}
+
+.status-grid td.status-grid__remarks {
+  text-align: center;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+/* Clamped to 2 lines so a long filename doesn't grow this cell's content
+   taller than any other cell in the same row — same "fixed, shorter content
+   height" pattern used for .upload-cell__label in SubmissionGrid.css. The
+   row itself is still content-driven (.status-grid td's height: 1px trick
+   above lets .status-cell stretch to whatever the row naturally needs), so
+   a row with a genuinely longer file list can still end up taller than an
+   empty row — only each individual cell's own content is capped, not the
+   row. */
+.status-cell__file {
+  font-size: 11px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* Same "clicking the filename views the file" pattern as LOASubmissionPage's
+   upload-cell — only applied when a filePath actually exists (see the
+   plain, non-clickable <span> fallback at each call site) so this never
+   promises a view that would 404. */
+.status-cell__file--clickable {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: center;
+}
+
+.status-cell__file--clickable:hover {
+  color: var(--accent-blue);
+  text-decoration: underline;
+}
+
+.status-cell__file-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--card-border);
+  width: 100%;
+}
+
+.status-cell__no-electives {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.status-grid-empty {
+  padding: 0 20px 20px;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+}

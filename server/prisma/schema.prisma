@@ -1,0 +1,321 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SchoolLevel {
+  ES
+  JHS
+  JHS_SHS
+  SHS
+}
+
+enum SubmissionStatus {
+  NOT_SUBMITTED
+  SUBMITTED
+  LATE
+}
+
+enum Role {
+  ADMIN
+  SCHOOL
+  // Self-service sub-account created by a SCHOOL, scoped to exactly one of
+  // that school's GradeLevels (User.gradeLevelId). Can upload/view/download/
+  // remove LOA files for their assigned grade (same as SCHOOL) and view
+  // Status of Submission scoped to that grade — but has no access at all to
+  // School Profile or to managing other Grade Level Chairman accounts.
+  GRADE_CHAIRMAN
+  // ADMIN-created, division-wide (not tied to any one School, unlike
+  // GRADE_CHAIRMAN). Read-only: can view/download submitted LOA Result files
+  // across every school, filtered to whichever Learning Area name(s) are in
+  // User.assignedLearningAreas. No upload/remove access anywhere.
+  SUPERVISOR
+}
+
+// The 4 fixed LOA Result types a school submits per Learning Area, per
+// Class/Section, per Term — parallel to (not replacing) the existing
+// Learning Area breakdown, so each cell in the grid multiplies by 4.
+enum ExamType {
+  DIAGNOSTIC_TEST
+  SUMMATIVE_TEST_1
+  SUMMATIVE_TEST_2
+  END_OF_TERM_EXAM
+}
+
+// What kind of document a Submission is, parallel to (not replacing)
+// ExamType -- a Test Questionnaire and a Table of Specifications are
+// distinct artifacts produced for the same exam period as the LOA Result
+// itself, not separate exam periods. Existing rows predate this field and
+// are backfilled to LOA_RESULT by the column default.
+enum DocumentType {
+  LOA_RESULT
+  TEST_QUESTIONNAIRE
+  TABLE_OF_SPECIFICATIONS
+}
+
+model Cluster {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  clusterHeadName    String
+  clusterConsultant  String
+  schools            School[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model School {
+  id             Int          @id @default(autoincrement())
+  schoolIdNumber String       @unique
+  schoolName     String
+  schoolHeadName String?
+  schoolEmail    String?
+  schoolLevel    SchoolLevel
+  cluster        Cluster      @relation(fields: [clusterId], references: [id])
+  clusterId      Int
+  gradeLevels    GradeLevel[]
+  // One SCHOOL-role login plus zero or more GRADE_CHAIRMAN logins — no
+  // longer a strict 1:1 (see User.schoolId), so callers that want "the"
+  // school login must filter this array to role: "SCHOOL" themselves
+  // (schoolInclude in school.controller.ts does this).
+  users          User[]
+  // Admin-set policy applying to every GRADE_CHAIRMAN account under this
+  // school at once (not the SCHOOL account itself -- see User.forceGoogleSignIn
+  // for that), checked live at login time rather than written onto each
+  // chairman row -- so it automatically covers a chairman created after this
+  // was turned on, with nothing to keep in sync. Default false so no existing
+  // or newly-created school is ever affected without an admin explicitly
+  // turning this on.
+  forceChairmenGoogleSignIn Boolean @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+// One row per grade level offered by a school (auto-populated based on School Level)
+model GradeLevel {
+  id            Int             @id @default(autoincrement())
+  school        School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId      Int
+  gradeName     String // e.g. "Grade 1"
+  classSections ClassSection[]
+
+  @@unique([schoolId, gradeName])
+}
+
+// A class/section within a grade level (number of organized classes = number of ClassSections)
+model ClassSection {
+  id           Int          @id @default(autoincrement())
+  gradeLevel   GradeLevel   @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
+  gradeLevelId Int
+  className    String
+  // Only meaningful for Grade 7-10: gates uploads for the elective learning
+  // areas (Creative Tech, Research). Ignored elsewhere.
+  hasElectives Boolean      @default(false)
+  // Only meaningful for Grade 11-12: per-elective file count target for the
+  // "Cluster of Electives" learning areas (see CLUSTER_OF_ELECTIVES_LEARNING_AREAS
+  // in utils/grades.ts), e.g. {"Academic Cluster": 3, "STEM": 2}. School-configured
+  // in School Profile. A missing/zero entry means uploads are blocked for that
+  // elective until the school sets a target. Ignored elsewhere.
+  electiveFileTargets Json  @default("{}")
+  submissions  Submission[]
+
+  @@unique([gradeLevelId, className])
+}
+
+// Curriculum learning areas, scoped per grade (not just school level) per the
+// Information Sheet's Notes — e.g. Grade 1 and Grade 3 both fall under ES but
+// have different subject sets. The same subject name recurs across grades
+// (e.g. "Filipino" in Grade 2 and Grade 7), so uniqueness is (name, grade).
+model LearningArea {
+  id          Int          @id @default(autoincrement())
+  name        String
+  grade       String // e.g. "Grade 1"
+  submissions Submission[]
+
+  @@unique([name, grade])
+}
+
+// One cell in the LOA Submission grid: Learning Area x Class/Section, scoped
+// to a specific Term (which in turn belongs to a SchoolYear) rather than a
+// bare term string, so the same class+subject+term can hold separate files
+// across different school years.
+model Submission {
+  id             Int              @id @default(autoincrement())
+  classSection   ClassSection     @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  classSectionId Int
+  learningArea   LearningArea     @relation(fields: [learningAreaId], references: [id])
+  learningAreaId Int
+  term           Term             @relation(fields: [termId], references: [id])
+  termId         Int
+  // Which of the 4 LOA Results this file is for. Existing rows predate this
+  // field and are backfilled to DIAGNOSTIC_TEST by the column default.
+  examType       ExamType         @default(DIAGNOSTIC_TEST)
+  // Which kind of document this file is (LOA Result / Test Questionnaire /
+  // Table of Specifications). Existing rows predate this field and are
+  // backfilled to LOA_RESULT by the column default.
+  documentType   DocumentType     @default(LOA_RESULT)
+  fileName       String?
+  filePath       String?
+  status         SubmissionStatus @default(NOT_SUBMITTED)
+  submittedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Not a DB-level @@unique any more: Cluster of Electives learning areas
+  // (see CLUSTER_OF_ELECTIVES_LEARNING_AREAS) allow multiple rows per
+  // (classSectionId, learningAreaId, termId, examType, documentType), up to a
+  // school-configured target. Every other learning area is still enforced as
+  // one row per key, in application code (uploadSubmission in submission.controller.ts).
+  @@index([classSectionId, learningAreaId, termId, examType, documentType])
+}
+
+// A School Year added on the Administration page. Exactly one SchoolYear
+// is ever isActive at a time (admin toggles it) — that's the year the School
+// Portal defaults to and, combined with the active Term, the only period
+// schools can upload/edit against; every other year/term is view-only.
+model SchoolYear {
+  id        Int      @id @default(autoincrement())
+  label     String   @unique // e.g. "2026-2027"
+  isActive  Boolean  @default(false)
+  terms     Term[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One of exactly 3 terms auto-created per SchoolYear (First/Second/Third).
+// Exactly one Term is ever isActive at a time, and it must belong to the
+// active SchoolYear — enforced in setSchoolYear.controller.ts, not the DB,
+// since activating a term also (re)activates its parent year.
+model Term {
+  id           Int          @id @default(autoincrement())
+  schoolYear   SchoolYear   @relation(fields: [schoolYearId], references: [id], onDelete: Cascade)
+  schoolYearId Int
+  name         String // "First" | "Second" | "Third"
+  isActive     Boolean      @default(false)
+  submissions  Submission[]
+  examSchedules ExamSchedule[]
+
+  @@unique([schoolYearId, name])
+}
+
+// Per-Term admin configuration of the 4 LOA Result types x 3 document types
+// (12 rows possible per Term): whether each is required at all, and (if so)
+// its submission window. Global — the same schedule applies to every school,
+// not configured per school. Uploads for an (ExamType, DocumentType) with no
+// row here (or required: false) are blocked, same pattern as a Cluster of
+// Electives target of 0 (see uploadSubmission).
+model ExamSchedule {
+  id           Int          @id @default(autoincrement())
+  term         Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId       Int
+  examType     ExamType
+  // Existing rows predate this field and are backfilled to LOA_RESULT by the
+  // column default.
+  documentType DocumentType @default(LOA_RESULT)
+  required  Boolean   @default(false)
+  startDate DateTime?
+  deadline  DateTime?
+  // Which file extensions uploadSubmission accepts for this (Term, ExamType)
+  // -- values are lowercase, no leading dot ("pdf", "doc", "docx", "xls",
+  // "xlsx"), plus the literal "others" meaning "any extension not in that
+  // list is also accepted". Empty array (the default, and every pre-existing
+  // row's value) means no restriction at all -- this is a new opt-in
+  // validation layer, not retroactively enforced on schedules nobody has
+  // configured it for.
+  allowedFileTypes String[] @default([])
+  // When false (the default), a submission after `deadline` is rejected --
+  // assertExamScheduleOpenForWrite() returns EXAM_DEADLINE_PASSED and
+  // uploadSubmission 403s. When true, the deadline stops blocking uploads
+  // entirely and a submission made after it is accepted but written with
+  // status: LATE instead of SUBMITTED -- completing the SubmissionStatus.LATE
+  // value, which existed in the schema and was already read by every stats/
+  // roster aggregate, but had no code path that ever wrote it before this.
+  allowLateSubmission Boolean @default(false)
+  // Admin-facing toggle, per (Term, DocumentType) -- written identically onto
+  // all 4 of that document type's ExamType rows (no dedicated table; same
+  // "duplicate a small value across rows" tradeoff already accepted for
+  // other per-group settings in this schema). True (the default, matching
+  // every pre-existing row's behavior) means the 4 Exam Types can only be
+  // marked `required` in the fixed Diagnostic Test -> Summative Test 1 ->
+  // Summative Test 2 -> End of Term Exam order (enforced client-side only,
+  // in SchoolYearTermPage.tsx's isExamTypeUnlocked() -- this column is not
+  // itself validated server-side, same as the ordering rule it replaces).
+  // False lets the admin mark any subset of the 4 as required in any order.
+  enforceOrder Boolean @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([termId, examType, documentType])
+}
+
+// Audit trail for security-sensitive actions (logins, account CRUD/password
+// resets across all 4 roles, and LOA file upload/access/removal) — ADMIN-only
+// viewing via GET /api/audit-logs. Actor identity is snapshotted (name/email/
+// role) rather than a live relation to User, since the actor's account may
+// later be deleted (e.g. a School delete cascades its User rows) and the log
+// must still show who did what. No relation/FK to User for the same reason.
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  action     String
+  actorId    Int?
+  actorName  String?
+  actorEmail String?
+  actorRole  Role?
+  targetType String?
+  targetId   Int?
+  details    String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+// Login account. ADMIN accounts manage the whole system; SCHOOL accounts are
+// scoped to exactly one School (schoolId required for that role). A School
+// can have multiple Users now: its own SCHOOL-role login plus zero or more
+// GRADE_CHAIRMAN logins it creates itself (self-service, not ADMIN-created)
+// — schoolId is deliberately not @unique any more. gradeLevelId is only set
+// (and only meaningful) for GRADE_CHAIRMAN.
+model User {
+  id           Int         @id @default(autoincrement())
+  email        String      @unique
+  passwordHash String
+  name         String
+  role         Role
+  school       School?     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId     Int?
+  // Only set (and only meaningful) for GRADE_CHAIRMAN: which GradeLevel
+  // row(s) this chairman may upload/view for. A plain scalar array (no
+  // Prisma relation, no enforced FK) rather than a join table -- same
+  // pattern as assignedLearningAreas below. Grade levels are only ever
+  // added in this app, never deleted (a whole-school delete cascades the
+  // User row itself regardless), so the lack of relation-level referential
+  // integrity here carries the same low, already-accepted risk. A non-
+  // multigrade chairman (the common case) just has a 1-element array.
+  gradeLevelIds Int[]      @default([])
+  // Only ever true for a GRADE_CHAIRMAN whose school is schoolLevel: ES --
+  // gates whether gradeLevelIds may hold more than one id. Enforced
+  // server-side in chairman.controller.ts, not just hidden client-side.
+  multigrade    Boolean    @default(false)
+  // Only set (and only meaningful) for SUPERVISOR: which Learning Area
+  // *names* (not specific per-grade LearningArea rows — the same subject
+  // name recurs across grades, see LearningArea's own comment) this account
+  // can view submitted files for, division-wide. Matched against
+  // Submission.learningArea.name, not a specific grade, so assigning
+  // "Science" covers every grade that offers Science.
+  assignedLearningAreas String[]  @default([])
+  // When true, PATCH /auth/login rejects this account's password and points
+  // it at Google Sign-In instead -- an admin-set policy per SCHOOL account
+  // (School Admins card), not something the account holder controls. Only
+  // ever exposed in the UI for SCHOOL; kept on User generically rather than
+  // scoped to School specifically since login itself is a User-level
+  // concern, matching where email/passwordHash already live. Default false
+  // so no existing or newly-created account is ever locked out of password
+  // login without an admin explicitly turning this on.
+  forceGoogleSignIn Boolean @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}

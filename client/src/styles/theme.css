@@ -1,0 +1,203 @@
+:root {
+  --sidebar-bg: #0b0f19;
+  --sidebar-bg-elevated: #131826;
+  --sidebar-border: #1f2534;
+  --sidebar-text: #9aa3b5;
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg: #3b6df0;
+
+  --page-bg: #f2f4f8;
+  --card-bg: #ffffff;
+  --card-border: #e7eaf1;
+
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+
+  --accent-blue: #3b6df0;
+  --accent-blue-light: #e2eafe;
+  --accent-purple: #7c3aed;
+  --accent-purple-dark: #6d28d9;
+  --accent-purple-light: #ede9fe;
+
+  --status-green: #16a34a;
+  --status-green-bg: #dcfce7;
+  --status-amber: #b45309;
+  --status-amber-bg: #fef3c7;
+  --status-red: #dc2626;
+  --status-red-bg: #fee2e2;
+  --status-slate: #475569;
+  --status-slate-bg: #e2e8f0;
+
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+
+  --font-display: "Barlow Condensed", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* SweetAlert2 (client/src/utils/alerts.ts) restyled to match the rest of
+   the app rather than SweetAlert's default look. */
+.swal-popup {
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-card);
+}
+
+.swal-title {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  font-size: 20px;
+}
+
+.swal-confirm--danger {
+  background: var(--status-red) !important;
+}
+
+.swal-toast {
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-card);
+}
+
+.swal-toast .swal2-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* .btn/.btn--primary live here (not AppLayout.css, where every other .btn--*
+   variant still lives) specifically so LoginPage.tsx -- which never imports
+   AppLayout.css, since it doesn't render <AppLayout> -- still gets them.
+   theme.css is imported eagerly from main.tsx for every route, so this is
+   the one stylesheet guaranteed to be loaded before anything renders,
+   login included. Before every page became React.lazy-loaded, AppLayout.css
+   loaded on /login anyway as a side effect of eager-bundling every page
+   (which all transitively imported AppLayout.tsx); lazy-loading removed
+   that side effect and silently broke both of LoginPage's .btn-based
+   buttons (the Google button's icon/arrow lost their flex row and stacked
+   vertically, and the Sign In button lost its background/padding/type
+   entirely) on a cold /login visit. Move only what LoginPage actually
+   needs -- .btn--blue/--green/--ghost are never used off an AppLayout-
+   wrapped page, so they stay put. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-dark));
+  color: #fff;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pill--green {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.pill--amber {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+}
+
+.pill--red {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}
+
+.pill--slate {
+  background: var(--status-slate-bg);
+  color: var(--status-slate);
+}
+
+.pill--blue {
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+}

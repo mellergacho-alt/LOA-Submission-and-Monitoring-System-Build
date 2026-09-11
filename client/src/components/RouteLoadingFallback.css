@@ -1,0 +1,40 @@
+.route-fallback {
+  display: flex;
+  min-height: 100vh;
+  background: var(--page-bg);
+}
+
+.route-fallback__sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+}
+
+.route-fallback__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.route-fallback__topbar {
+  height: 56px;
+  flex-shrink: 0;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  display: none;
+}
+
+.route-fallback__body {
+  padding: 26px;
+}
+
+@media (max-width: 960px) {
+  .route-fallback__sidebar {
+    display: none;
+  }
+
+  .route-fallback__topbar {
+    display: block;
+  }
+}

@@ -1,0 +1,25 @@
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--card-border) 25%, var(--page-bg) 37%, var(--card-border) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.skeleton-table th,
+.skeleton-table td {
+  vertical-align: middle;
+}
+
+.skeleton-card {
+  padding: 22px 26px;
+}

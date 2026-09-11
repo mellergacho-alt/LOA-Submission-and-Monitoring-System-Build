@@ -1,0 +1,29 @@
+# Node
+node_modules/
+
+# Generated production build output (server/dist + client/dist assembled
+# together, plus schema.sql) -- not source, regenerate via BUILD.md/README
+# whenever a new deployable is needed, don't commit a stale one.
+/Build/
+
+# Not part of the app — reference/personal files dropped in the repo root
+00a549bc-d283-4089-918b-f13c904f5519.jpg
+305213496_519556836643319_6308257870959519411_n (1).jpg
+Division Logo Final (2).png
+
+# Word lock files
+~$*.docx
+
+# Remember plugin session memory (not part of this app)
+.remember/
+
+# Local-only reference files (kept on disk, not in the repo)
+CLAUDE.md
+claude-docs/
+Sample UI.png
+Information Sheet-LOA Submission and Monitoring System.docx
+resume.txt
+
+# OS
+.DS_Store
+Thumbs.db

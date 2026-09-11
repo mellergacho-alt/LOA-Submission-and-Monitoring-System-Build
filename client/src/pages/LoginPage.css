@@ -1,0 +1,323 @@
+/* Patterned after https://guihcd-doctracking.depedguihulngan.ph/ (2026-08-27),
+   originally as a two-panel split card (dark illustrated preview panel +
+   white form panel). The dark preview panel was removed the next day
+   (2026-08-28, explicit user request, "remove the black area of the log in
+   box"), then immediately replaced with the Division Mantra (previously
+   dropped entirely during the earlier guihcd-assist redesign) on the same
+   side, per a follow-up request to arrange it "similar to the previous
+   layout" -- i.e. back to one joined rounded card with two panels sharing a
+   single border/shadow, not two separate floating cards (that in-between
+   arrangement lasted only briefly; confirmed via AskUserQuestion before
+   reverting to the joined-card structure). .login-split-card is the shared
+   card; .login-split-card__panel--form (white, left) and
+   .login-split-card__panel--mantra (translucent dark, right) are its two
+   panels. Google Sign-In stays the promoted primary action with manual
+   login collapsed behind the "Admin / Manual Login" toggle -- none of that
+   changed, only the right panel's content and the card's outer structure. */
+.login-screen {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  background: #cbd5e1;
+}
+
+/* Separate layer/sibling from .login-split-card (not a shared ancestor) so
+   opacity here only fades the photo itself, not the card sitting on top of
+   it. No blur (removed per an earlier explicit request) -- the photo is
+   sharp, just faded to 50% opacity (per explicit user request) against
+   .login-screen's own background color showing through. brightness(1.15) is
+   a separate, orthogonal adjustment (2026-08-28, "make the background image
+   lighter by 15%") -- it lightens the photo's own pixels, independent of
+   how transparent/faded it is against the screen's background color. */
+.login-screen__backdrop {
+  position: absolute;
+  inset: 0;
+  background: url("/deped-building.jpg") center / cover no-repeat;
+  opacity: 0.5;
+  filter: brightness(1.15);
+}
+
+.login-split-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.3);
+}
+
+.login-split-card__panel {
+  padding: 28px 26px;
+}
+
+.login-split-card__panel--form {
+  flex: 1;
+  min-width: 0;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The Division Mantra panel -- translucent dark (rgba() of var(--sidebar-bg)'s
+   own hex value, #0b0f19, rather than a flat opaque fill) so the backdrop
+   photo still shows faintly through it, same "photo stays visible" spirit
+   as .login-screen__backdrop's own 50% opacity. Fixed flex-basis rather than
+   flex: 1 so it doesn't grow to match the form panel's width on wide
+   viewports -- it's a supporting element, not an equal partner. */
+.login-split-card__panel--mantra {
+  flex: 0 0 320px;
+  background: rgba(11, 15, 25, 0.86);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-mantra__divider {
+  width: 40px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent-blue);
+  margin-bottom: 18px;
+}
+
+.login-mantra__text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+
+@media (max-width: 720px) {
+  .login-split-card {
+    flex-direction: column;
+    max-width: 420px;
+  }
+
+  .login-split-card__panel--mantra {
+    flex: none;
+  }
+}
+
+.login-split-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.login-split-card__logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.login-split-card__logo--small {
+  width: 26px;
+  height: 26px;
+}
+
+.login-split-card__wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.login-split-card__wordmark--dark {
+  color: var(--text-primary);
+}
+
+.login-split-card__wordmark-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 1px;
+}
+
+.login-split-card__wordmark-sub--dark {
+  color: var(--text-secondary);
+}
+
+.login-split-card__heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 0 5px;
+  color: var(--text-primary);
+}
+
+.login-split-card__subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+}
+
+.login-manual-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  padding: 10px 0 4px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.login-manual-toggle:hover {
+  color: var(--accent-blue);
+}
+
+.login-manual-toggle svg:first-child {
+  width: 12px;
+  height: 12px;
+}
+
+.login-manual-toggle__chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.15s ease;
+}
+
+.login-manual-toggle__chevron--open {
+  transform: rotate(180deg);
+}
+
+.login-split-card__copyright {
+  margin: auto 0 0;
+  padding-top: 16px;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-form .form-field label {
+  font-size: 10.5px;
+}
+
+.login-error {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0 0;
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 11px;
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.login-google__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.login-google__divider::before,
+.login-google__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
+}
+
+/* .btn.btn--google (not just .btn--google): AppLayout.css's bare .btn rule
+   sets text-transform: uppercase/letter-spacing/font-display, and whichever
+   of the two same-specificity single-class rules loads later in the final
+   bundle wins -- not reliably this one. A two-class compound selector has
+   higher specificity than .btn alone, so this override wins regardless of
+   import/bundle order. Confirmed live: without this, the button rendered as
+   "SIGN IN WITH GOOGLE" in the app's uppercase display font instead of
+   Google's own brand casing/typeface. */
+.btn.btn--google {
+  width: 100%;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  color: #3c4043;
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12.5px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.btn.btn--google:hover {
+  background: #f8f9fa;
+}
+
+.btn.btn--google svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The reference site's promoted, dark "Sign in with DepEd Mail" pill --
+   a distinct variant of .btn.btn--google (the plain white Google-brand
+   button above is no longer used on this page but is left in place since
+   nothing else in the codebase references it). Three classes beats the
+   two-class .btn.btn--google rule above on specificity alone, so this wins
+   without needing !important -- same technique already documented above. */
+.btn.btn--google.login-google__btn--primary {
+  background: var(--sidebar-bg);
+  border: none;
+  color: #fff;
+  justify-content: space-between;
+  padding: 12px 14px 12px 10px;
+}
+
+.btn.btn--google.login-google__btn--primary:hover {
+  background: #1e293b;
+}
+
+.login-google__btn-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-google__btn-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

@@ -1,0 +1,138 @@
+.app-layout {
+  display: flex;
+  /* flex-start, not stretch: stretch would force the sidebar's own box to
+     match .app-layout__main's full content height, leaving its
+     `position: sticky` (Sidebar.css) zero room to actually stick — a
+     sticky element can't float free of a container it already fills edge
+     to edge. flex-start lets the sidebar keep its own height (its
+     min-height: 100vh floor), so sticky has room to pin it to the
+     viewport while a taller main column scrolls past it. */
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.app-layout__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout__main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 32px 48px;
+}
+
+/* Hamburger + brand bar, shown only below Sidebar.css's mobile breakpoint —
+   at desktop widths the sidebar is always visible so this has nothing to
+   do. Sticky (not fixed) so it scrolls with .app-layout__content rather than
+   needing its own height reserved out of .app-layout__main's padding. */
+.app-topbar {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--sidebar-bg);
+    position: sticky;
+    top: 0;
+    z-index: 150;
+  }
+
+  .app-topbar__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--sidebar-bg-elevated);
+    color: #fff;
+  }
+
+  .app-topbar__toggle svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .app-topbar__logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .app-topbar__title {
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 15, 25, 0.5);
+    z-index: 250;
+  }
+
+  .app-layout__main {
+    padding: 18px 16px 32px;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.page-header__title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.page-header__subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-top: 4px;
+}
+
+/* .btn (base) and .btn--primary moved to theme.css -- see the comment
+   there for why. Every other .btn--* variant stays here, since nothing
+   off an AppLayout-wrapped page uses them. */
+
+.btn--blue {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.btn--green {
+  background: var(--status-green);
+  color: #fff;
+}
+
+.btn--ghost {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+}
